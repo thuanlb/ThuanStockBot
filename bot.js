@@ -35,6 +35,7 @@ const fetchVN30Stocks = async () => {
     }
 
     const selectedStocks = stocks.filter(stock => stock.cp < -3);
+    selectedStocks.sort((a, b) => b.cp - a.cp);
 
     if (selectedStocks.length === 0) {
       console.log('📉 Không có mã nào thỏa điều kiện.');
@@ -79,16 +80,18 @@ ${volume > avgVolume ? '🔥 *Vượt trung bình!*' : '🧊 *Dưới trung bìn
   }
 };
 
-cron.schedule('*/15 9-15 * * *', () => {
+cron.schedule('0,15,30,45 9-15 * * *', () => {
   const now = new Date();
+  const hour = now.getHours();
   const minutes = now.getMinutes();
 
-  if ([0, 15, 30, 45].includes(minutes)) {
-    console.log(`🚀 Quét lúc ${now.toLocaleTimeString()}`);
-    fetchVN30Stocks();
-  } else {
-    console.log(`⏸ Không gửi tin nhắn lúc ${now.toLocaleTimeString()}`);
+  if (hour === 15 && minutes > 0) {
+    console.log(`⏸ Đã quá 15h00 – Không gửi nữa.`);
+    return;
   }
+
+  console.log(`🚀 Quét lúc ${now.toLocaleTimeString()}`);
+  fetchVN30Stocks();
 });
 
 const init = () => {
