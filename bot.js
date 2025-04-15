@@ -34,7 +34,6 @@ const fetchVN30Stocks = async () => {
       return;
     }
 
-    // Lọc các mã giảm mạnh trên x%
     const selectedStocks = stocks.filter(stock => stock.cp < -3);
 
     if (selectedStocks.length === 0) {
@@ -42,26 +41,35 @@ const fetchVN30Stocks = async () => {
       return;
     }
 
+    const time = new Date().toLocaleTimeString('vi-VN', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
     for (let stock of selectedStocks) {
       const symbol = stock.ss;
       const price = stock.mp;
       const changePercent = stock.cp.toFixed(2);
-
-      const volume = stock.lv || 0; // KL hiện tại
-      const avgVolume = stock.bfq || 0; // KL trung bình 20 phiên
+      const volume = stock.lv || 0;
+      const avgVolume = stock.bfq || 0;
 
       const totalBuyVolume = (stock.b1v || 0) + (stock.b2v || 0) + (stock.b3v || 0);
       const totalSellVolume = (stock.o1v || 0) + (stock.o2v || 0) + (stock.o3v || 0);
 
-      const message = `📈 *Tín hiệu mua*
-Cổ phiếu: *${symbol}*
-Giá hiện tại: *${price.toLocaleString()}* đ
-Giảm: *${changePercent}%*
+      const message = `
+━━━━━━━━━━━━━━━━━━━
+🕒 *${time}* – *Tín hiệu mua*
+🏷️ Cổ phiếu: *${symbol}*
+💵 Giá hiện tại: *${price.toLocaleString()}* đ
+📉 Giảm: *${changePercent}%*
+
 🔹 Tổng KL Mua: *${totalBuyVolume.toLocaleString()}*
 🔸 Tổng KL Bán: *${totalSellVolume.toLocaleString()}*
-🔹 Khối lượng giao dịch hiện tại: *${volume.toLocaleString()}*
-🔸 Khối lượng trung bình (20 phiên): *${avgVolume.toLocaleString()}*
-📊 *Khối lượng hiện tại ${volume > avgVolume ? 'lớn hơn' : 'nhỏ hơn'} khối lượng trung bình*`;
+
+📊 KL hiện tại: *${volume.toLocaleString()}*
+📈 Trung bình 20 phiên: *${avgVolume.toLocaleString()}*
+${volume > avgVolume ? '🔥 *Vượt trung bình!*' : '🧊 *Dưới trung bình*'}
+`;
 
       await sendMessage(message);
     }
@@ -71,7 +79,6 @@ Giảm: *${changePercent}%*
   }
 };
 
-// Gửi vào các mốc phút: 0, 15, 30, 45 từ 9h đến 15h
 cron.schedule('*/15 9-15 * * *', () => {
   const now = new Date();
   const minutes = now.getMinutes();
@@ -84,7 +91,6 @@ cron.schedule('*/15 9-15 * * *', () => {
   }
 });
 
-// Gọi khi khởi động nếu trong giờ giao dịch
 const init = () => {
   const hour = new Date().getHours();
   if (hour >= 9 && hour < 15) {
