@@ -35,7 +35,7 @@ const fetchVN30Stocks = async () => {
     }
 
     // Lọc các mã giảm mạnh trên x%
-    const selectedStocks = stocks.filter(stock => stock.cp < -1);
+    const selectedStocks = stocks.filter(stock => stock.cp < -3);
 
     if (selectedStocks.length === 0) {
       console.log('📉 Không có mã nào thỏa điều kiện.');
@@ -46,11 +46,22 @@ const fetchVN30Stocks = async () => {
       const symbol = stock.ss;
       const price = stock.mp;
       const changePercent = stock.cp.toFixed(2);
-      const volume = stock.lv; // Khối lượng giao dịch hiện tại
-      const avgVolume = stock.bfq; // Khối lượng trung bình 20 phiên
 
-      // Tạo thông điệp chỉ gửi thông tin về khối lượng và so sánh với khối lượng trung bình
-      const message = `📊 *Thông tin khối lượng*\nCổ phiếu: *${symbol}*\nGiá hiện tại: *${price}* đ\nGiảm: *${changePercent}%*\nKhối lượng giao dịch hiện tại: *${volume}*\nKhối lượng trung bình (20 phiên): *${avgVolume}*\nKhối lượng giao dịch hiện tại ${volume > avgVolume ? 'lớn hơn' : 'nhỏ hơn'} khối lượng trung bình.`;
+      const volume = stock.lv || 0; // KL hiện tại
+      const avgVolume = stock.bfq || 0; // KL trung bình 20 phiên
+
+      const totalBuyVolume = (stock.b1v || 0) + (stock.b2v || 0) + (stock.b3v || 0);
+      const totalSellVolume = (stock.o1v || 0) + (stock.o2v || 0) + (stock.o3v || 0);
+
+      const message = `📈 *Tín hiệu mua*
+Cổ phiếu: *${symbol}*
+Giá hiện tại: *${price.toLocaleString()}* đ
+Giảm: *${changePercent}%*
+🔹 Tổng KL Mua: *${totalBuyVolume.toLocaleString()}*
+🔸 Tổng KL Bán: *${totalSellVolume.toLocaleString()}*
+🔹 Khối lượng giao dịch hiện tại: *${volume.toLocaleString()}*
+🔸 Khối lượng trung bình (20 phiên): *${avgVolume.toLocaleString()}*
+📊 *Khối lượng hiện tại ${volume > avgVolume ? 'lớn hơn' : 'nhỏ hơn'} khối lượng trung bình*`;
 
       await sendMessage(message);
     }
@@ -60,13 +71,12 @@ const fetchVN30Stocks = async () => {
   }
 };
 
-// Lịch trình chỉ gửi tin nhắn vào mốc 0, 15, 30, hoặc 45 phút mỗi giờ trong khung giờ giao dịch
+// Gửi vào các mốc phút: 0, 15, 30, 45 từ 9h đến 15h
 cron.schedule('*/15 9-15 * * *', () => {
   const now = new Date();
   const minutes = now.getMinutes();
 
-  // Kiểm tra nếu thời gian là 0, 15, 30, hoặc 45 phút
-  if (minutes === 0 || minutes === 15 || minutes === 30 || minutes === 45) {
+  if ([0, 15, 30, 45].includes(minutes)) {
     console.log(`🚀 Quét lúc ${now.toLocaleTimeString()}`);
     fetchVN30Stocks();
   } else {
@@ -74,7 +84,7 @@ cron.schedule('*/15 9-15 * * *', () => {
   }
 });
 
-// Gọi ngay khi khởi động nếu trong giờ giao dịch
+// Gọi khi khởi động nếu trong giờ giao dịch
 const init = () => {
   const hour = new Date().getHours();
   if (hour >= 9 && hour < 15) {
