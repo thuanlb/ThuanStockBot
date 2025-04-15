@@ -21,7 +21,7 @@ const sendMessage = async (message) => {
 
 const fetchVN30Stocks = async () => {
   try {
-    const res = await axios.get('https://iboard-query.ssi.com.vn/v2/stock/group/VN30', {
+    const res = await axios.get(process.env.STOCK_API_URL, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/110 Safari/537.36'
       }
@@ -34,7 +34,7 @@ const fetchVN30Stocks = async () => {
       return;
     }
 
-    // Lọc các mã giảm mạnh trên 5%
+    // Lọc các mã giảm mạnh trên x%
     const selectedStocks = stocks.filter(stock => stock.cp < -1);
 
     if (selectedStocks.length === 0) {
