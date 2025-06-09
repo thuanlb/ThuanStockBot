@@ -34,8 +34,8 @@ const fetchVN30Stocks = async () => {
       return;
     }
 
-    const selectedStocks = stocks.filter(stock => stock.cp < -3);
-    selectedStocks.sort((a, b) => b.cp - a.cp);
+    const selectedStocks = stocks.filter(stock => stock.priceChangePercent < -2);
+    selectedStocks.sort((a, b) => b.priceChangePercent - a.priceChangePercent);
 
     if (selectedStocks.length === 0) {
       console.log('📉 Không có mã nào thỏa điều kiện.');
@@ -48,14 +48,19 @@ const fetchVN30Stocks = async () => {
     });
 
     for (let stock of selectedStocks) {
-      const symbol = stock.ss;
-      const price = stock.mp;
-      const changePercent = stock.cp.toFixed(2);
-      const volume = stock.lv || 0;
-      const avgVolume = stock.bfq || 0;
+      const symbol = stock.stockSymbol;
+      const price = stock.matchedPrice;
+      const changePercent = stock.priceChangePercent.toFixed(2);
+      const volume = stock.nmTotalTradedQty || 0;
 
-      const totalBuyVolume = (stock.b1v || 0) + (stock.b2v || 0) + (stock.b3v || 0);
-      const totalSellVolume = (stock.o1v || 0) + (stock.o2v || 0) + (stock.o3v || 0);
+      const totalBuyVolume =
+        (stock.best1BidVol || 0) +
+        (stock.best2BidVol || 0) +
+        (stock.best3BidVol || 0);
+      const totalSellVolume =
+        (stock.best1OfferVol || 0) +
+        (stock.best2OfferVol || 0) +
+        (stock.best3OfferVol || 0);
 
       const message = `
 ━━━━━━━━━━━━━━━━━━━
@@ -66,10 +71,7 @@ const fetchVN30Stocks = async () => {
 
 🔹 Tổng KL Mua: *${totalBuyVolume.toLocaleString()}*
 🔸 Tổng KL Bán: *${totalSellVolume.toLocaleString()}*
-
 📊 KL hiện tại: *${volume.toLocaleString()}*
-📈 Trung bình 20 phiên: *${avgVolume.toLocaleString()}*
-${volume > avgVolume ? '🔥 *Vượt trung bình!*' : '🧊 *Dưới trung bình*'}
 `;
 
       await sendMessage(message);
